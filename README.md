@@ -25,6 +25,7 @@
     **Promise** defines a block of code to be executed once an operation is finished(similar to callbacks and events).
     
     It does this in a bit more defined way.
+    Sync vs async operations
 
     **Remember asynchronous execution and multithreading are different.**
     
@@ -150,6 +151,9 @@
     Here we used the `next()` method to iterate over the values. We could instead use `for...of`
     
     When we use `for...of` it automatically calls `next` function for each iterator.
+
+    Symbol.iterator with for...of
+
     When we use `[Symbol.iterator]()` on native objects like arrays it will return the result of the `values()` method.
     
     `values()` → default iterator for sets and arrays
@@ -286,6 +290,7 @@
     Generator functions is a short-cut to create iterators.
     
     Every generator is an iterator. Not every iterator is a generator.
+
     - Generator function is called.
     - It does not execute the body. It returns an iterator called **generator object.**
     - We execute the function body by calling `next()`. In between next method calls, the generator is paused.
@@ -437,6 +442,9 @@
     This will reject even if only one promise rejects. This is changed with ES2020. They introduced `Promise.allSettled()`.
     
     This method resolves when all of the given Promise collection either resolves or gets rejected.
+
+    Promise.allSettled() logic
+
     ```jsx
     const promises = [
       fetch('https://picsum.photos/200', {mode: "no-cors"}), 
@@ -687,3 +695,311 @@
     ```
     
 - **Chapter 6: Cancelling Pending Async Requests**
+
+    Modern apps rely on communication with external APIs that we can not often control. Sometimes we want to cancel a pending async request based on some logic. This can be time-based or a reaction-based situation(like a user cancelling an operation in the UI).
+
+    We use `AbortController` API's generic interface to cancel a fetch request. This API has the `AbortController` Interface which contains `abort()` method.
+
+    We create a cancellable `fetch()` request by passing in a `signal` property of `AbortController`.
+
+    <aside>
+    ❗ Modern browsers and Node version > `15.0.0` supports this
+
+    </aside>
+
+    ### Cancelling async tasks after a period of time
+
+    Alternative to `Promise.fetch()` solution, this is a preference. No correct or wrong. Cancelling a pending async request using when a DOM event is fired is much easier to code with `AbortController`
+
+    `Promise.race()` is easier to code when you want to concurrently fetch data from an external source and use a cached/local data as the back up.
+
+    ```jsx
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    fetch('https://eloux.com/todos/1', {signal})
+      .then(response => {
+        return response.json();
+      }).then(response => {
+        console.log(response);
+      });
+
+    setTimeout(() => controller.abort(), 2000);
+    ```
+
+    - Call `AbortController` and retrieve the signal object
+    - Pass the signal object to `fetch()` method to allow communicating with the async `fetch()` method.
+    - `abort()` is the only method that `controller` has and it will cause promise object that is returned by `fetch()` to reject with an exception.
+    - If there is a `catch()` in the `fetch()` method call, this will be used.
+
+    We can use an event listener and check `aborted` property of the `signal`
+
+    ```jsx
+    signal.addEventListener('abort', () => {
+    	console.log(signal.aborted);
+    });
+    // logs: => true
+    ```
+
+    We can create our own fetcher function that returns after a timeout to be used frequently:
+
+    ```jsx
+    function fetchWithTimeout(url, settings, timeout) {
+      // If the timeout argument doesn't exists
+      if (timeout === undefined) {
+        return fetch(url, settings);
+      }
+
+      // if timeout isn't an integer, throw an error
+      if (!Number.isInteger(timeout)) {
+        throw new TypeError('The third argument is not an integer')
+      }
+
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), timeout);
+      settings.signal = controller.signal;
+      return fetch(url, settings);
+    }
+    ```
+
+    ### Handling an aborted request
+
+    When we `abort()` a request, we receive a `DOMException` error, which is not ideal if the operation is cancelled intentionally.
+
+    We can change this by adding calling `catch()` :
+
+    ```jsx
+    const src = 'https://eloux.com/todos/1';
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    fetch(src, {signal})
+      .then(response => {
+        return response.json();
+      })
+      .then(json => {
+        console.log(json);
+      })
+      .catch(error => {
+        if (error.name === 'AbortError') {
+          console.log('Request successfully cancelled');
+        } else {
+          console.error('Fetch failed!', error);
+        }
+      });
+
+    controller.abort();
+
+    // logs:
+    // => Request successfully cancelled
+    ```
+
+    ### Removing multiple event listeners
+
+    In a normal scenario, we add event listeners via `addEventListener()` and to remove an event listener, we need to individually cancel these via `removeEventListener()` method.
+
+    We must use the same arguments for adding and removing event listeners:
+
+    ```jsx
+    container.addEventListener('mouseenter', funcHello);
+    container.removeEventListener('mouseenter', funcHello);
+    ```
+
+    With `AbortController` we can deregister multiple event listeners at the same time.
+
+    We achieve this by passing in signal property to `addEventListener()`:
+
+    ```jsx
+    const container = document.querySelector('.container');
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    function sayHello() {
+      container.textContent = 'Hello';
+    }
+
+    function sayBye() {
+      container.textContent = 'Bye!';
+    }
+
+    function depress() {
+      container.style.backgroundColor = 'aqua';
+    }
+
+    function release() {
+      container.style.backgroundColor = 'transparent';
+    }
+
+    container.addEventListener('mouseenter', sayHello, {signal});
+    container.addEventListener('mouseout', sayBye, {signal});
+    container.addEventListener('mousedown', depress, {signal});
+    container.addEventListener('mouseup', release, {signal});
+
+    controller.abort();
+    ```
+
+    ## Making a user cancelable async request
+
+    ```jsx
+    const loadBtn = document.querySelector('.loadBtn');
+    const abortBtn = document.querySelector('.abortBtn');
+    const image = document.querySelector('.image');
+    const result = document.querySelector('.result');
+
+    const controller = new AbortController();
+
+    // abort the request
+    abortBtn.addEventListener('click', () => controller.abort());
+
+    // load the image
+    loadBtn.addEventListener('click', async () => {
+      loadBtn.disabled = true;
+      abortBtn.disabled = false;
+
+      result.textContent = 'Loading...';
+
+      try {
+        const response = await fetch(`https://upload.wikimedia.org/wikipedia/com
+    mons/a/a3/Kayakistas_en_Glaciar_Grey.jpg`, {signal: controller.signal});
+        const blob = await response.blob();
+        image.src = URL.createObjectURL(blob);
+
+        // remove the "Loading.." text
+        result.textContent = '';
+      }
+      catch (err) {
+        if (err.name === 'AbortError') {
+          result.textContent = 'Request successfully canceled';
+        } else {
+          result.textContent = 'An error occured!'
+          console.error(err);
+        }
+      }
+
+      loadBtn.disabled = false;
+      abortBtn.disabled = true;
+    });
+    ```
+
+    ### Aborting multiple fetch requests with one signal
+
+    ```jsx
+    const loadBtn = document.querySelector('.loadBtn');
+    const abortBtn = document.querySelector('.abortBtn');
+    const gallery = document.querySelector('.gallery');
+    const result = document.querySelector('.result');
+
+    const controller = new AbortController();
+
+    const urls = [
+      `https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Por_do_Sol_em
+    _Baixa_Grande.jpg/320px-Por_do_Sol_em_Baixa_Grande.jpg`,
+      `https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Zebrasoma_fla
+    vescens_Luc_Viatour.jpg/320px-Zebrasoma_flavescens_Luc_Viatour.jpg`,
+      `https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Domestic_goat
+    _kid_in_capeweed.jpg/320px-Domestic_goat_kid_in_capeweed.jpg`
+    ];
+
+    abortBtn.addEventListener('click', () => controller.abort());
+
+    loadBtn.addEventListener('click', async () => {
+      loadBtn.disabled = true;
+      abortBtn.disabled = false;
+
+      result.textContent = 'Loading...';
+
+      const tasks = urls.map(url => fetch(url, {signal: controller.signal}));
+
+      try {
+        const response = await Promise.all(tasks);
+        response.forEach(async (r) => {
+          const img = document.createElement('img');
+          const blob = await r.blob();
+          img.src = URL.createObjectURL(blob);
+          gallery.appendChild(img);
+        });
+        result.textContent = '';
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          result.textContent = 'Request successfully canceled';
+        } else {
+          result.textContent = 'An error occured!'
+          console.error(err);
+        }
+      }
+
+      loadBtn.disabled = false;
+      abortBtn.disabled = true;
+    });
+    ```
+
+- **Chapter 7: Accessing Promise Results From Another Module**
+
+    Top level `await` is an addition to JS to run async tasks at the top of the module. With this we could tell different parts of the code(modules or chunks in the same file) to halt the execution until another part is fully executed.
+
+    This way we can make modules to work as big async tasks. This allows us to run the child modules before running the parent module.
+
+    Normally, when we use `await` at the top without `async` we get this error:
+
+    ```jsx
+    const res = await fetch('https://example');
+    // SyntaxError: await is only valid in async function
+
+    // to fix, wrap an async IIFE:
+    (async function() {
+    const res = await fetch('https://example');
+    }());
+
+    // Top level await:
+    await fetch("https://google.com", { mode: "no-cors" }
+    ```
+
+    Using top level await on modules:
+
+    ```jsx
+    // Module file:
+    const api = `http://api.openweathermap.org/data/2.5/weather?
+    q=Tokyo,Japan&APPID=1b1b3e9e909416e5bbe365a0a8505fbb`;
+    // use your own app id in production
+
+    const response = await fetch(api);
+    const result = await response.json();
+
+    export {result};
+
+    // Import in another file
+    import {result} from './module1.js';
+
+    console.log(result.main.temp);
+    ```
+
+    ### Putting top-level await to work
+
+    Using it with the variables:
+
+    ```jsx
+    const messages = await import(`./packs/messages-${navigator.language}.js`);
+    ```
+
+    Loading dependencies with fallbacks:
+
+    ```jsx
+    let d3;
+
+    try {
+      d3 = await import('https://cdnjs.cloudflare.com/ajax/libs/d3/6.7.0/d3.min.js');
+    } catch {
+      d3 = await import('https://ajax.googleapis.com/ajax/libs/d3js/6.7.0/d3.min.js');
+    }
+    ```
+
+    Instead of `try/catch` syntax we can also use `Promise.any()`:
+
+    ```jsx
+    const CDNs = [
+      'https://cdnjs.cloudflare.com/ajax/libs/d3/6.7.0/d3.min.js',
+      'https://ajax.googleapis.com/ajax/libs/d3js/6.7.0/d3.min.js'
+    ];
+
+    const d3 = await Promise.any(CDNs);
+    ```
