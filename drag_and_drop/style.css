@@ -1,0 +1,13 @@
+.draggable {
+  width: 100px;
+  height: 100px;
+  position: fixed;
+  border: 2px solid;
+  line-height: 100px;
+  text-align: center;
+  user-select: none;
+  cursor: move;
+}
+p {
+  line-height: 32px;
+}
