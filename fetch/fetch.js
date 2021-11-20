@@ -1,31 +1,16 @@
-const XMLHttpRequest = require('xhr2');
 const fetch = require('node-fetch');
 const api = `https://api.chucknorris.io/jokes/random`;
 
-// Working with XMLHttpRequest pre fetch:
-// Listener function
-function listener() {
-  let data = JSON.parse(this.responseText);
-  console.log(data.value);
-}
-// // error handler function
-function error(err) {
-  console.log("Error!: ", err);
-}
-// // create request object and send
-let req = new XMLHttpRequest();
-req.onload = listener;
-req.onerror = error;
-req.open('get', api, true);
-req.send();
-
-
 // Step 1: What is fetch?
-// console.log(fetch(api));
-
-fetch(api).then((result) => {
-  console.log(result);
-  // return result.json();
-}).then(response => {
-  // console.log(response.value);
+fetch(api).then((response) => {
+  if (response.status !== 200) {
+    console.log('Request unsuccessful: ' + response.status);
+  }
+  response.json().then((data) => {
+    console.log(data)
+  }).catch((err) => {
+    console.log('Response content parsing error: ' + err);
+  })
+}).then((err) => {
+  console.log('Fetch error: ' + err);
 });
