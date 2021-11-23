@@ -1,4 +1,4 @@
-const XMLHttpRequest = require('xhr2');
+import XMLHttpRequest from 'xhr2'
 const api = `https://api.chucknorris.io/jokes/random`;
 
 

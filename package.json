@@ -1,6 +1,24 @@
 {
+  "name": "async_js",
+  "version": "1.0.0",
+  "description": "- **Overview**     - **Chapter 1:** shows you how to define or customize the iteration behavior of     JavaScript objects using custom iterators.     - **Chapter 2** is where you learn to use a generator function as a short-cut to     create iterators. Generators are useful when you don’t need to manipulate     the state-maintaining behavior of an interator.     - **Chapter 3:** introduces the Promise.allSettled() method and compares it to its older     sibling Promise.all(). You’ll use Promise.allSettled() to execute multiple async tasks     simultaneously and process the outcome even if some of them fail.     - **Chapter 4:** gives you tips to protect your app against server downtime while     improving its performance with Promise.any() from ES2021.     - **Chapter 5:** explains how to use the Promise.race() method to set a time limit for     async tasks to avoid entering a state of prolonged or endless waiting.     - **Chapter 6:** is all about the AbortController API. You’ll learn to use this API to     cancel pending async requests when the user clicks a cancel button.     - **Chapter 7:** covers top-level await and how to make use of it to initialize     resources, define dependency paths dynamically, and load dependencies with     a fallback implementation. - **Introduction**",
+  "main": "temp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asungur/async_js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asungur/async_js/issues"
+  },
+  "homepage": "https://github.com/asungur/async_js#readme",
   "dependencies": {
-    "node-fetch": "^2.6.6",
+    "node-fetch": "^3.1.0",
     "xhr2": "^0.2.1"
-  }
+  },
+  "type": "module"
 }
