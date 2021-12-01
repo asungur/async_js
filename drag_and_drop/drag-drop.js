@@ -15,7 +15,7 @@ const el = document.querySelector('.draggable');
 //   window.addEventListener('mouseup', e => {
 //     if (!e.buttons || e.buttons === 1) return;
 //     controller.abort();
-//   }, { signal: controller.signal });
+//   });
 // });
 
 
