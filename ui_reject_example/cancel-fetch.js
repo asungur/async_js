@@ -1,5 +1,5 @@
 // import fetch from 'node-fetch';
-let controller = new AbortController();
+let controller = new AbortController(); // ???
 const api = `https://api.chucknorris.io/jokes/random`;
 const callButton = document.querySelector('#caller');
 const stopButton = document.querySelector('#stopper');
@@ -14,19 +14,19 @@ const fetchFact = () => {
       displayer.innerText = 'Response content parsin error' + err;
     });
   }).catch(err => {
-    displayer.innerText = err;
+    // displayer.innerText = err;
   });
 }
 
 const getFact = () => {
   displayer.innerText = 'Fetching...';
-  setTimeout(() => { fetchFact(); }, 5000);
+  setTimeout(() => { fetchFact() }, 5000);
 }
 
 callButton.addEventListener('click', getFact);
 
 stopButton.addEventListener('click', () => {
   controller.abort();
-  let controller = new AbortController();
+  controller = new AbortController();
   displayer.innerText = "The request has been cancelled";
 });
