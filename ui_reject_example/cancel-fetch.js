@@ -1,5 +1,5 @@
 // import fetch from 'node-fetch';
-const controller = new AbortController();
+let controller = new AbortController();
 const api = `https://api.chucknorris.io/jokes/random`;
 const callButton = document.querySelector('#caller');
 const stopButton = document.querySelector('#stopper');
@@ -27,5 +27,6 @@ callButton.addEventListener('click', getFact);
 
 stopButton.addEventListener('click', () => {
   controller.abort();
+  let controller = new AbortController();
   displayer.innerText = "The request has been cancelled";
 });

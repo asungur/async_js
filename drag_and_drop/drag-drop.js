@@ -1,42 +1,38 @@
 const el = document.querySelector('.draggable');
 
 // With AbortController
-// const controller = new AbortController();
-// el.addEventListener('mousedown', e => {
-//   if (e.buttons !== 1) return;
-//   const { offsetX, offsetY } = e;
+let controller = new AbortController();
+el.addEventListener('mousedown', e => {
+  if (e.buttons !== 1) return;
+  const { offsetX, offsetY } = e;
 
-//   window.addEventListener('mousemove', e => {
-//     if (e.buttons !== 1) return;
-//     el.style.left = e.pageX - offsetX + 'px';
-//     el.style.top = e.pageY - offsetY + 'px';
-//   }, { signal: controller.signal });
+  window.addEventListener('mousemove', e => {
+    el.style.left = e.pageX - offsetX + 'px';
+    el.style.top = e.pageY - offsetY + 'px';
+  }, { signal: controller.signal });
 
-//   window.addEventListener('mouseup', e => {
-//     if (!e.buttons || e.buttons === 1) return;
-//     controller.abort();
-//   });
-// });
+  window.addEventListener('mouseup', e => {
+    controller.abort();
+    controller = new AbortController();
+  });
+});
 
 
 // Without Abort Controller
-// el.addEventListener('mousedown', e => {
-//   if (e.buttons !== 1) return;
-//   const { offsetX, offsetY } = e;
+el.addEventListener('mousedown', e => {
+  if (e.buttons !== 1) return;
+  const { offsetX, offsetY } = e;
 
-//   const onMouseMove = e => {
-//     if (e.buttons !== 1) return;
-//     el.style.left = e.pageX - offsetX + 'px';
-//     el.style.top = e.pageY - offsetY + 'px';
-//   }
+  const onMouseMove = e => {
+    el.style.left = e.pageX - offsetX + 'px';
+    el.style.top = e.pageY - offsetY + 'px';
+  }
 
-//   const onMouseUp = e => {
-//     if (!e.buttons || e.buttons === 1) return;
+  const onMouseUp = e => {
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+  }
 
-//     window.removeEventListener('mousemove', onMouseMove);
-//     window.removeEventListener('mouseup', onMouseUp);
-//   }
-
-//   window.addEventListener('mousemove', onMouseMove);
-//   window.addEventListener('mouseup', onMouseUp);
-// });
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+});
